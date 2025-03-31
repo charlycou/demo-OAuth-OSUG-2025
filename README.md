@@ -1,58 +1,110 @@
-# README: Limitations of Front-Channel Only Applications with GitHub OAuth
+# OAuth and OIDC Demo Application
 
-## Introduction
+This is a demo application designed to support a presentation on **OAuth 2.0** and **OpenID Connect (OIDC)**. It implements the **Authorization Code Flow** with both **front-channel** and **back-channel** communications, showcasing the way modern applications handle user authentication and authorization using third-party identity providers.
 
-This repository showcases a GitHub OAuth Authorization Code Flow implementation using the **PKCE (Proof Key for Code Exchange)** mechanism. It is designed for front-channel-only scenarios, where there is no backend server to complete token exchange steps. While PKCE is a recommended standard for securing SPA (Single-Page Applications), **GitHub Authorization Server has limitations that prevent full support for front-channel-only applications**.
+## Purpose
 
----
+The goal of this application is to provide a practical example of implementing OAuth 2.0 and OIDC concepts for:
 
-## Limitations of Front-Channel PKCE Flow with GitHub
+1. **Authentication** - Proving the identity of a user.
+2. **Authorization** - Allowing controlled access to resources on behalf of users.
 
-Unfortunately, **GitHub’s Authorization Server** does not fully support the Authorization Code Flow with **PKCE** in front-channel-only applications due to the following reasons:
-
-1. **CORS Restrictions on Access Token Requests**:
-    - When exchanging the `code` for an `access_token`, the POST request made to `https://github.com/login/oauth/access_token` is **blocked by the browser due to CORS (Cross-Origin Resource Sharing) restrictions**.
-    - The GitHub Authorization Server does not provide the necessary CORS headers (`Access-Control-Allow-Origin`) required to allow client-side token exchange via JavaScript.
-
-2. **PKCE Code Challenge Not Supported**:
-    - While the PKCE standard requires that the `code_challenge` (generated from the `code_verifier`) be verified during the token exchange step, GitHub’s Authorization Server does not verify the PKCE code challenge at all.
-    - This makes the PKCE mechanism ineffective for protecting public, front-channel-only applications from code interception attacks.
-
-3. **GitHub OAuth Requires a Backend**:
-    - GitHub’s architecture is designed with the assumption that the **token exchange step must be performed securely on a backend server**. This ensures that:
-        - The `client_secret` is protected and not exposed to the public.
-        - The sensitive `access_token` exchange occurs in a secure environment, avoiding CORS issues.
+This demo is ideal for explaining how secure flows are designed and executed while leveraging OAuth 2.0 and OIDC standards.
 
 ---
 
-## Why Front-Channel-Only Applications are Not Authorized
+## Features
 
-According to GitHub’s OAuth flow implementation:
-- Sensitive operations such as token exchange require the presence of a **backend server** to securely handle the `client_id`, `client_secret`, and the `code` parameter.
-- Without a backend, **GitHub explicitly does not allow applications to request tokens using just client-side JavaScript**, due to security risks like token exposure and code interception.
-
----
-
-## Workaround for SPAs
-
-If you are working on a Single-Page Application (SPA) without a backend, the following options may help mitigate this limitation:
-
-1. **Implement a Minimal Backend**:
-    - Create a lightweight backend server to handle the `code` exchange for an `access_token` and any further API calls securely.
-    - Use modern backend technologies such as:
-        - **Node.js with Express**
-        - **Serverless Functions** (e.g., AWS Lambda, Vercel, or Netlify serverless functions)
-    - After token exchange, the backend can return the token to the frontend or securely proxy subsequent API requests.
-
-2. **Direct Alternative Authentication Providers**:
-    - Consider alternative authentication providers designed explicitly for front-channel-only applications. Options like **OAuth providers that support PKCE properly**, such as **Auth0**, **Okta**, or Firebase Authentication, may provide more flexibility for SPA authentication.
+- **Authorization Code Flow**:
+   - Demonstrates both the **front-channel** (browser-to-identity-provider communication) and **back-channel** (server-to-server communication).
+- OAuth and OIDC flows with detailed logging for showcasing token requests and exchanges.
+- Integration with third-party Identity Providers (e.g., Google, Auth0, or Okta).
+- Demonstrates secure storage and usage of access tokens and ID tokens.
+- Client-side (frontend) and server-side (backend) examples included.
 
 ---
 
-## Conclusion
+## Technologies Used
 
-A front-channel-only implementation of GitHub Authorization Code Flow using the PKCE mechanism is not fully supported due to the limitations of GitHub's framework (lack of CORS support and no PKCE verification). To securely integrate GitHub OAuth into your application, you **must implement a backend** for the token exchange and use it to protect sensitive API interactions.
-
-If you're building a front-channel-only SPA, it's important to carefully evaluate the limitations of GitHub OAuth and consider alternative approaches to provide a secure and user-friendly authentication experience.
+- **Frontend**: Vue.js 3.5.13
+- **Backend**: Express.js 4.21.2
+- **Build Tools**: Vite 6.2.1 with Vue DevTools
+- **HTTP Communication**: Axios 1.8.4
+- **Package Manager**: npm
 
 ---
+
+## Prerequisites
+
+1. **Node.js**: Ensure you have Node.js (version 16 or higher).
+2. **npm**: Install Node.js which includes the npm package manager.
+3. **Identity Provider Credentials**:
+   - Register your application with an Identity Provider (e.g., Google, Auth0, or Okta) to obtain:
+      - **Client ID**
+      - **Client Secret**
+      - **Redirect URI**
+
+---
+
+## Setup Instructions
+
+### 1. Clone the Repository
+```bash
+git clone <repository-url>
+cd <repository-folder>
+```
+
+### 2. Install Dependencies
+```bash
+npm install
+```
+
+### 3. Configure Environment Variables
+
+Create a `.env` file in the root directory and add the following:
+```env
+CLIENT_ID=<Your_OAuth_Client_ID>
+CLIENT_SECRET=<Your_OAuth_Client_Secret>
+REDIRECT_URI=http://localhost:3000/callback
+PROVIDER_DISCOVERY_URL=<Provider_Discovery_Endpoint>
+```
+
+- Replace `<Your_OAuth_Client_ID>` and `<Your_OAuth_Client_Secret>` with the values from your Identity Provider.
+- Set `<Provider_Discovery_Endpoint>` with the Issuer URL (e.g., `https://accounts.google.com/.well-known/openid-configuration`).
+
+### 4. Start the Development Server
+
+#### Backend:
+```bash
+npm run server
+```
+
+#### Frontend:
+```bash
+npm run dev
+```
+
+This will start the backend server on `http://localhost:3000` and the frontend application on `http://localhost:5173`.
+
+---
+
+## Usage
+
+1. Open your browser and navigate to `http://localhost:5173`.
+2. Click on **Login** to start the OAuth 2.0 Authorization Code Flow.
+3. Authenticate with the identity provider's authorization page.
+4. Observe the exchange of authorization code for access tokens in the backend.
+5. After successful login, explore the user profile fetched via OIDC.
+
+---
+
+## Explanation of Authorization Code Flow
+
+1. **Authorization Request**:
+   - The browser (front-channel) redirects the user to the Authorization Server for authentication using the Client ID and Redirect URI.
+2. **Authorization Response**:
+   - After the user authenticates, the Authorization Server redirects the user back to the application along with an **authorization code**.
+3. **Token Exchange**:
+   - The backend (back-channel) exchanges the authorization code for an **access token** using the Client Secret.
+4. **Token Usage**:
+   - The access token is used to fetch user data from protected APIs.
